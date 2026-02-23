@@ -3,16 +3,16 @@ package com.example.log
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
+import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.builders.irString
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
-import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.expressions.IrBody
-import org.jetbrains.kotlin.ir.types.isNullableAny
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
+import org.jetbrains.kotlin.ir.types.isNullableAny
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.name.CallableId
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 class LogIrTransformer(
-    private val pluginContext: IrPluginContext
+    private val pluginContext: IrPluginContext,
 ) : IrElementTransformerVoidWithContext() {
 
     private val logAnnotationFqName = FqName("com.example.log.Log")
@@ -31,7 +31,7 @@ class LogIrTransformer(
     @OptIn(UnsafeDuringIrConstructionAPI::class)
     private val printlnSymbol by lazy {
         pluginContext.referenceFunctions(
-            CallableId(packageName = FqName("kotlin.io"), callableName = Name.identifier("println"))
+            CallableId(packageName = FqName("kotlin.io"), callableName = Name.identifier("println")),
         ).single { fn ->
             fn.owner.parameters.size == 1 && fn.owner.parameters[0].type.isNullableAny()
         }
@@ -41,12 +41,12 @@ class LogIrTransformer(
     override fun visitClassNew(declaration: IrClass): IrStatement {
         if (!declaration.hasAnnotation(logAnnotationFqName)) return super.visitClassNew(declaration)
 
-        val primaryCtor = declaration.declarations
+        val primaryConstructor = declaration.declarations
             .filterIsInstance<IrConstructor>()
             .firstOrNull { it.isPrimary } ?: return super.visitClassNew(declaration)
 
         val className = declaration.kotlinFqName.shortName().asString()
-        primaryCtor.body = buildBodyWithLog(primaryCtor, className, primaryCtor.body)
+        primaryConstructor.body = buildBodyWithLog(primaryConstructor, className, primaryConstructor.body)
 
         return super.visitClassNew(declaration)
     }
