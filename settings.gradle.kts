@@ -3,10 +3,21 @@
 // It is also used for some aspects of project-wide configuration, like managing plugins, dependencies, etc.
 // https://docs.gradle.org/current/userguide/settings_file_basics.html
 
+pluginManagement {
+    // gradle-plugin を composite build として登録することで id("com.example.log") が解決できる
+    includeBuild("gradle-plugin")
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 dependencyResolutionManagement {
     // Use Maven Central as the default repository (where Gradle will download dependencies) in all subprojects.
     @Suppress("UnstableApiUsage")
     repositories {
+        mavenLocal()
         mavenCentral()
     }
 }
@@ -21,5 +32,8 @@ plugins {
 // Learn more about structuring projects with Gradle - https://docs.gradle.org/8.7/userguide/multi_project_builds.html
 include(":sample")
 include(":utils")
+include(":annotations")
+include(":compiler-plugin")
+// Note: gradle-plugin は includeBuild として登録しているためここには含めない
 
 rootProject.name = "kotlin-compiler-plugin-sample"
